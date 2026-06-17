@@ -63,6 +63,12 @@ where
         // 0x30 (pll)
         // 0x04 (power on)
 
+        // Unknown command
+        self.cmd_with_data(spi, Command::UnknownInit1, &[0x78])?;
+
+        // set the panel settings
+        self.cmd_with_data(spi, Command::PanelSetting, &[0x0f, 0x29])?;
+
         // start the booster
         self.cmd_with_data(
             spi,
@@ -70,18 +76,23 @@ where
             &[0x0D, 0x12, 0x30, 0x20, 0x19, 0x2A, 0x22],
         )?;
 
+        self.cmd_with_data(spi, Command::VcomAndDataIntervalSetting, &[0x37])?;
+
+        // set resolution
+        self.send_resolution(spi)?;
+
+        // Unknown
+        self.cmd_with_data(spi, Command::UnkonwnInit2, &[0x01])?;
+        self.cmd_with_data(spi, Command::PllControl, &[0x08])?;
+
         // power on
         self.command(spi, Command::PowerOn)?;
         delay.delay_us(5000);
         self.wait_until_idle(spi, delay)?;
 
-        // set the panel settings
-        self.cmd_with_data(spi, Command::PanelSetting, &[0x0f, 0x29])?;
-
-        // set resolution
-        self.send_resolution(spi)?;
-
-        self.cmd_with_data(spi, Command::VcomAndDataIntervalSetting, &[0x37])?;
+        self.cmd_with_data(spi, Command::UnknownInit3, &[0x02])?;
+        self.cmd_with_data(spi, Command::UnknownInit4, &[0x5D])?;
+        self.cmd_with_data(spi, Command::UnknownInit5, &[0x00])?;
 
         Ok(())
     }

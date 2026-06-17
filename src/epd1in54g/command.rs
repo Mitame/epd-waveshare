@@ -22,6 +22,7 @@ pub(crate) enum Command {
     TemperatureSensorSelection = 0x41,
     TemperatureSensorWrite = 0x42,
     TemperatureSensorRead = 0x43,
+    UnknownInit1 = 0x4D,
     VcomAndDataIntervalSetting = 0x50,
     LowerPowerDetection = 0x51,
     ResolutionSetting = 0x61,
@@ -36,7 +37,11 @@ pub(crate) enum Command {
     ReadMtpData = 0x92,
     Revision2 = 0x9E,
     ReadMtpReservedBytes = 0x9F,
+    UnknownInit5 = 0xA5,
+    UnknownInit3 = 0xE0,
     PowerSaving = 0xE3,
+    UnknownInit4 = 0xE6,
+    UnkonwnInit2 = 0xE9,
     LvdVoltageSelect = 0xE4,
 }
 
