@@ -15,7 +15,7 @@ pub const HEIGHT: u32 = 200;
 pub const DEFAULT_BACKGROUND_COLOR: QuadColor = QuadColor::White;
 const IS_BUSY_LOW: bool = false;
 const NUM_DISPLAY_BITS: u32 = WIDTH / 4 * HEIGHT;
-const SINGLE_BYTE_WRITE: bool = true;
+const SINGLE_BYTE_WRITE: bool = false;
 
 pub(crate) mod command;
 use self::command::Command;
@@ -63,7 +63,7 @@ where
         // 0x30 (pll)
         // 0x04 (power on)
 
-        // Unknown command
+        // Unknown command (4D)
         self.cmd_with_data(spi, Command::UnknownInit1, &[0x78])?;
 
         // set the panel settings
