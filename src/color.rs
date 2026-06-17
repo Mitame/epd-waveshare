@@ -600,8 +600,8 @@ impl QuadColor {
         self as u8
     }
     /// Converts two colors into a single byte for the Display
-    pub fn colors_byte(a: QuadColor, b: QuadColor) -> u8 {
-        a.get_nibble() << 4 | b.get_nibble()
+    pub fn colors_byte(a: QuadColor, b: QuadColor, c: QuadColor, d: QuadColor) -> u8 {
+        a.get_nibble() << 6 | b.get_nibble() << 4 | c.get_nibble() << 2 | d.get_nibble()
     }
 
     // TODO: this function is inaccurately named and should be updated

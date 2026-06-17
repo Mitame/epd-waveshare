@@ -81,18 +81,20 @@ where
         // set resolution
         self.send_resolution(spi)?;
 
-        // Unknown
+        // Unknown 0xe9
         self.cmd_with_data(spi, Command::UnkonwnInit2, &[0x01])?;
         self.cmd_with_data(spi, Command::PllControl, &[0x08])?;
+
+        // Only in the python code, but not in C?
+        // (These appear to be the fast LUT commands. Should probably note them for that impl)
+        // self.cmd_with_data(spi, Command::UnknownInit3, &[0x02])?;
+        // self.cmd_with_data(spi, Command::UnknownInit4, &[0x5D])?;
+        // self.cmd_with_data(spi, Command::UnknownInit5, &[0x00])?;
 
         // power on
         self.command(spi, Command::PowerOn)?;
         delay.delay_us(5000);
         self.wait_until_idle(spi, delay)?;
-
-        self.cmd_with_data(spi, Command::UnknownInit3, &[0x02])?;
-        self.cmd_with_data(spi, Command::UnknownInit4, &[0x5D])?;
-        self.cmd_with_data(spi, Command::UnknownInit5, &[0x00])?;
 
         Ok(())
     }
@@ -184,7 +186,7 @@ where
     }
 
     fn display_frame(&mut self, spi: &mut SPI, delay: &mut DELAY) -> Result<(), SPI::Error> {
-        self.command(spi, Command::DisplayRefresh)?;
+        self.cmd_with_data(spi, Command::DisplayRefresh, &[0x00])?;
         self.wait_until_idle(spi, delay)?;
 
         Ok(())
@@ -204,7 +206,7 @@ where
 
     fn clear_frame(&mut self, spi: &mut SPI, delay: &mut DELAY) -> Result<(), SPI::Error> {
         self.wait_until_idle(spi, delay)?;
-        let color = QuadColor::colors_byte(DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR);
+        let color = QuadColor::colors_byte(DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR);
 
         // Clear the black
         self.command(spi, Command::DataStartTransmission1)?;
@@ -259,18 +261,25 @@ where
 
         self.command(spi, Command::ResolutionSetting)?;
 
-        // | D7 | D6 | D5 | D4 | D3 | D2 |      D1 |      D0 |
-        // |  - |  - |  - |  - |  - |  - | HRES[9] | HRES[8] |
-        self.send_data(spi, &[((w >> 8) as u8) & 0b0000_0011])?;
-        // | D7 | D6 | D5 | D4 | D3 | D2 | D1 | D0 |
-        // |         HRES[7:2]           |  0 |  0 |
-        self.send_data(spi, &[(w as u8) & 0b1111_1100])?;
-        // | D7 | D6 | D5 | D4 | D3 | D2 |      D1 |      D0 |
-        // |  - |  - |  - |  - |  - |  - | VRES[9] | VRES[8] |
-        self.send_data(spi, &[((h >> 8) as u8) & 0b0000_0011])?;
-        // | D7 | D6 | D5 | D4 | D3 | D2 | D1 |      D0 |
-        // |                  VRES[7:0]                 |
-        self.send_data(spi, &[(h as u8)])?;
+        // // | D7 | D6 | D5 | D4 | D3 | D2 |      D1 |      D0 |
+        // // |  - |  - |  - |  - |  - |  - | HRES[9] | HRES[8] |
+        // self.send_data(spi, &[((w >> 8) as u8) & 0b0000_0011])?;
+        // // | D7 | D6 | D5 | D4 | D3 | D2 | D1 | D0 |
+        // // |         HRES[7:2]           |  0 |  0 |
+        // self.send_data(spi, &[(w as u8) & 0b1111_1100])?;
+        // // | D7 | D6 | D5 | D4 | D3 | D2 |      D1 |      D0 |
+        // // |  - |  - |  - |  - |  - |  - | VRES[9] | VRES[8] |
+        // self.send_data(spi, &[((h >> 8) as u8) & 0b0000_0011])?;
+        // // | D7 | D6 | D5 | D4 | D3 | D2 | D1 |      D0 |
+        // // |                  VRES[7:0]                 |
+        // self.send_data(spi, &[(h as u8)])?;
+        // Send it as the original did, to avoid potential differences
+        self.send_data(spi, &[
+            (w / 256) as u8,
+            (w % 256) as u8,
+            (h / 256) as u8,
+            (h % 256) as u8
+        ])?;
 
         Ok(())
     }
