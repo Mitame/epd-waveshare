@@ -13,7 +13,7 @@ pub const WIDTH: u32 = 200;
 pub const HEIGHT: u32 = 200;
 /// Default Background Color (white)
 pub const DEFAULT_BACKGROUND_COLOR: QuadColor = QuadColor::White;
-const IS_BUSY_LOW: bool = true;
+const IS_BUSY_LOW: bool = false;
 const NUM_DISPLAY_BITS: u32 = WIDTH / 4 * HEIGHT;
 const SINGLE_BYTE_WRITE: bool = true;
 
@@ -129,7 +129,7 @@ where
     fn sleep(&mut self, spi: &mut SPI, delay: &mut DELAY) -> Result<(), SPI::Error> {
         self.wait_until_idle(spi, delay)?;
 
-        self.command(spi, Command::PowerOff)?;
+        self.cmd_with_data(spi, Command::PowerOff, &[0x00])?;
         self.wait_until_idle(spi, delay)?;
         self.cmd_with_data(spi, Command::DeepSleep, &[0xa5])?;
 
