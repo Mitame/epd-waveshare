@@ -142,7 +142,7 @@ impl ColorType for QuadColor {
     const BUFFER_COUNT: usize = 1;
 
     fn bitmask(&self, _bwrbit: bool, pos: u32) -> (u8, u16) {
-        let bit = 0xC0 >> (pos % 4);
+        let bit = 0xC0 >> ((pos % 4) * 2);
 
         const ALL_WHITE_BITS: u16 = 0b01010101_01010101;
         const ALL_C1_BITS: u16 = 0b10101010_10101010;
@@ -726,6 +726,19 @@ mod tests {
         assert_eq!(
             QuadColor::Chromatic2.bitmask(false, 0),
             (0b00111111, u16::from_le_bytes([0b11000000, 0b00000000]))
+        );
+
+        assert_eq!(
+            QuadColor::White.bitmask(false, 1),
+            (0b11001111, u16::from_le_bytes([0b00010000, 0b00000000]))
+        );
+        assert_eq!(
+            QuadColor::White.bitmask(false, 2),
+            (0b11110011, u16::from_le_bytes([0b00000100, 0b00000000]))
+        );
+        assert_eq!(
+            QuadColor::White.bitmask(false, 3),
+            (0b11111100, u16::from_le_bytes([0b00000001, 0b00000000]))
         );
     }
 }
