@@ -85,12 +85,6 @@ where
         self.cmd_with_data(spi, Command::UnkonwnInit2, &[0x01])?;
         self.cmd_with_data(spi, Command::PllControl, &[0x08])?;
 
-        // Only in the python code, but not in C?
-        // (These appear to be the fast LUT commands. Should probably note them for that impl)
-        // self.cmd_with_data(spi, Command::UnknownInit3, &[0x02])?;
-        // self.cmd_with_data(spi, Command::UnknownInit4, &[0x5D])?;
-        // self.cmd_with_data(spi, Command::UnknownInit5, &[0x00])?;
-
         // power on
         self.command(spi, Command::PowerOn)?;
         delay.delay_us(5000);
@@ -222,10 +216,23 @@ where
 
     fn set_lut(
         &mut self,
-        _spi: &mut SPI,
-        _delay: &mut DELAY,
-        _refresh_rate: Option<RefreshLut>,
+        spi: &mut SPI,
+        delay: &mut DELAY,
+        refresh_rate: Option<RefreshLut>,
     ) -> Result<(), SPI::Error> {
+        match refresh_rate {
+            None => {}
+            // Do nothing for now -- we don't have the full LUT sequence
+            Some(RefreshLut::Full) => {}
+            Some(RefreshLut::Quick) => {
+                // This doesn't appear to do much, but it's in the example code
+                self.cmd_with_data(spi, Command::UnknownInit3, &[0x02])?;
+                self.cmd_with_data(spi, Command::UnknownInit4, &[0x5D])?;
+                // This breaks stuff
+                // self.cmd_with_data(spi, Command::UnknownInit5, &[0x00])?;
+                self.wait_until_idle(spi, delay)?;
+            }
+        }
         Ok(())
     }
 
