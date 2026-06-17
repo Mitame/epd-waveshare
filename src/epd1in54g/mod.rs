@@ -206,7 +206,12 @@ where
 
     fn clear_frame(&mut self, spi: &mut SPI, delay: &mut DELAY) -> Result<(), SPI::Error> {
         self.wait_until_idle(spi, delay)?;
-        let color = QuadColor::colors_byte(DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR);
+        let color = QuadColor::colors_byte(
+            DEFAULT_BACKGROUND_COLOR,
+            DEFAULT_BACKGROUND_COLOR,
+            DEFAULT_BACKGROUND_COLOR,
+            DEFAULT_BACKGROUND_COLOR,
+        );
 
         // Clear the black
         self.command(spi, Command::DataStartTransmission1)?;
@@ -274,12 +279,15 @@ where
         // // |                  VRES[7:0]                 |
         // self.send_data(spi, &[(h as u8)])?;
         // Send it as the original did, to avoid potential differences
-        self.send_data(spi, &[
-            (w / 256) as u8,
-            (w % 256) as u8,
-            (h / 256) as u8,
-            (h % 256) as u8
-        ])?;
+        self.send_data(
+            spi,
+            &[
+                (w / 256) as u8,
+                (w % 256) as u8,
+                (h / 256) as u8,
+                (h % 256) as u8,
+            ],
+        )?;
 
         Ok(())
     }

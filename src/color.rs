@@ -54,9 +54,9 @@ pub enum QuadColor {
     /// White color
     #[default]
     White,
-    /// Chromatic color 1 (usually red)
+    /// Chromatic color 1 (usually yellow)
     Chromatic1,
-    /// Chromatic color 2 (usually yellow)
+    /// Chromatic color 2 (usually red)
     Chromatic2,
 }
 
@@ -630,10 +630,10 @@ impl QuadColor {
         match self {
             QuadColor::White => (0xff, 0xff, 0xff),
             QuadColor::Black => (0x00, 0x00, 0x00),
-            // Note: assumes red
-            QuadColor::Chromatic1 => (0xff, 0x00, 0x00),
             // Note: assumes yellow
-            QuadColor::Chromatic2 => (0xff, 0xff, 0x00),
+            QuadColor::Chromatic1 => (0xff, 0xff, 0x00),
+            // Note: assumes red
+            QuadColor::Chromatic2 => (0xff, 0x00, 0x00),
         }
     }
 }
