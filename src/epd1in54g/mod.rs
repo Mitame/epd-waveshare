@@ -22,13 +22,12 @@ use self::command::Command;
 use crate::buffer_len;
 
 /// Full size buffer for use with the 1in54g EPD
-/// TODO this should be a QuadColor, but let's keep it as is at first
 #[cfg(feature = "graphics")]
 pub type Display1in54g = crate::graphics::Display<
     WIDTH,
     HEIGHT,
     false,
-    { buffer_len(WIDTH as usize, HEIGHT as usize) },
+    { buffer_len(WIDTH as usize, HEIGHT as usize) * 2 },
     QuadColor,
 >;
 
