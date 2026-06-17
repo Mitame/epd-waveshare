@@ -46,6 +46,20 @@ pub enum TriColor {
     Chromatic,
 }
 
+/// Only for the Black/White/Color1/Color2-Displays
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum QuadColor {
+    /// Black color
+    Black,
+    /// White color
+    #[default]
+    White,
+    /// Chromatic color 1 (usually red)
+    Chromatic1,
+    /// Chromatic color 2 (usually yellow)
+    Chromatic2,
+}
+
 /// For the 7 Color Displays
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum OctColor {
@@ -119,6 +133,27 @@ impl ColorType for TriColor {
                     (bit as u16) << 8 | bit as u16
                 },
             ),
+        }
+    }
+}
+
+impl ColorType for QuadColor {
+    const BITS_PER_PIXEL_PER_BUFFER: usize = 2;
+    const BUFFER_COUNT: usize = 1;
+
+    fn bitmask(&self, _bwrbit: bool, pos: u32) -> (u8, u16) {
+        let bit = 0xB0 >> (pos % 4);
+
+        const ALL_WHITE_BITS: u16 = 0b01010101_01010101;
+        const ALL_C1_BITS: u16 = 0b10101010_10101010;
+        const ALL_C2_BITS: u16 = 0b11111111_11111111;
+
+        match self {
+            // TODO: check these. .1 may be incorrect
+            QuadColor::Black => (!bit, 0u16),
+            QuadColor::White => (!bit, (bit as u16) & ALL_WHITE_BITS),
+            QuadColor::Chromatic1 => (!bit, (bit as u16) & ALL_C1_BITS),
+            QuadColor::Chromatic2 => (!bit, (bit as u16) & ALL_C2_BITS),
         }
     }
 }
@@ -484,6 +519,121 @@ impl From<TriColor> for embedded_graphics_core::pixelcolor::Rgb888 {
             TriColor::White => embedded_graphics_core::pixelcolor::Rgb888::WHITE,
             // assume chromatic is red
             TriColor::Chromatic => embedded_graphics_core::pixelcolor::Rgb888::new(255, 0, 0),
+        }
+    }
+}
+
+// impl From<Color> for QuadColor {
+//     fn from(value: Color) -> Self {
+//         match value {
+//             Color::Black => QuadColor::Black,
+//             Color::White => QuadColor::White,
+//         }
+//     }
+// }
+
+#[cfg(feature = "graphics")]
+impl From<BinaryColor> for QuadColor {
+    fn from(b: BinaryColor) -> QuadColor {
+        match b {
+            BinaryColor::On => QuadColor::Black,
+            BinaryColor::Off => QuadColor::White,
+        }
+    }
+}
+
+#[cfg(feature = "graphics")]
+impl From<QuadColor> for embedded_graphics_core::pixelcolor::Rgb888 {
+    fn from(b: QuadColor) -> Self {
+        let (r, g, b) = b.rgb();
+        Self::new(r, g, b)
+    }
+}
+
+#[cfg(feature = "graphics")]
+impl From<embedded_graphics_core::pixelcolor::Rgb888> for QuadColor {
+    fn from(p: embedded_graphics_core::pixelcolor::Rgb888) -> QuadColor {
+        use embedded_graphics_core::prelude::RgbColor;
+        let colors = [
+            QuadColor::Black,
+            QuadColor::White,
+            QuadColor::Chromatic1,
+            QuadColor::Chromatic2,
+        ];
+        // if the user has already mapped to the right color space, it will just be in the list
+        if let Some(found) = colors.iter().find(|c| c.rgb() == (p.r(), p.g(), p.b())) {
+            return *found;
+        }
+
+        // This is not ideal but just pick the nearest color
+        *colors
+            .iter()
+            .map(|c| (c, c.rgb()))
+            .map(|(c, (r, g, b))| {
+                let dist = (i32::from(r) - i32::from(p.r())).pow(2)
+                    + (i32::from(g) - i32::from(p.g())).pow(2)
+                    + (i32::from(b) - i32::from(p.b())).pow(2);
+                (c, dist)
+            })
+            .min_by_key(|(_c, dist)| *dist)
+            .map(|(c, _)| c)
+            .unwrap_or(&QuadColor::White)
+    }
+}
+
+#[cfg(feature = "graphics")]
+impl From<embedded_graphics_core::pixelcolor::raw::RawU4> for QuadColor {
+    fn from(b: embedded_graphics_core::pixelcolor::raw::RawU4) -> Self {
+        use embedded_graphics_core::prelude::RawData;
+        QuadColor::from_nibble(b.into_inner()).unwrap()
+    }
+}
+
+#[cfg(feature = "graphics")]
+impl PixelColor for QuadColor {
+    type Raw = embedded_graphics_core::pixelcolor::raw::RawU4;
+}
+
+impl QuadColor {
+    /// Gets the Nibble representation of the Color as needed by the display
+    pub fn get_nibble(self) -> u8 {
+        self as u8
+    }
+    /// Converts two colors into a single byte for the Display
+    pub fn colors_byte(a: QuadColor, b: QuadColor) -> u8 {
+        a.get_nibble() << 4 | b.get_nibble()
+    }
+
+    // TODO: this function is inaccurately named and should be updated
+    ///Take the nibble (lower 4 bits) and convert to an QuadColor if possible
+    pub fn from_nibble(nibble: u8) -> Result<QuadColor, OutOfColorRangeParseError> {
+        match nibble & 0x3 {
+            0x00 => Ok(QuadColor::Black),
+            0x01 => Ok(QuadColor::White),
+            0x02 => Ok(QuadColor::Chromatic1),
+            0x03 => Ok(QuadColor::Chromatic2),
+            e => Err(OutOfColorRangeParseError(e)),
+        }
+    }
+    ///Split the nibbles of a single byte and convert both to an QuadColor if possible
+    pub fn split_byte(
+        byte: u8,
+    ) -> Result<(QuadColor, QuadColor, QuadColor, QuadColor), OutOfColorRangeParseError> {
+        let a = QuadColor::from_nibble(byte & 0x3)?;
+        let b = QuadColor::from_nibble((byte >> 2) & 0x3)?;
+        let c = QuadColor::from_nibble((byte >> 4) & 0x3)?;
+        let d = QuadColor::from_nibble((byte >> 6) & 0x3)?;
+        Ok((d, c, b, a))
+    }
+    /// Converts to limited range of RGB values.
+    pub fn rgb(self) -> (u8, u8, u8) {
+        match self {
+            QuadColor::White => (0xff, 0xff, 0xff),
+            QuadColor::Black => (0x00, 0x00, 0x00),
+            // Note: assumes red
+            QuadColor::Chromatic1 => (0xff, 0x00, 0x00),
+            // Note: assumes yellow
+            QuadColor::Chromatic2 => (0xff, 0xff, 0x00),
         }
     }
 }
