@@ -13,7 +13,7 @@ pub const WIDTH: u32 = 200;
 pub const HEIGHT: u32 = 200;
 /// Default Background Color (white)
 pub const DEFAULT_BACKGROUND_COLOR: QuadColor = QuadColor::White;
-const IS_BUSY_LOW: bool = false;
+const IS_BUSY_LOW: bool = true;
 const NUM_DISPLAY_BITS: u32 = WIDTH / 4 * HEIGHT;
 const SINGLE_BYTE_WRITE: bool = false;
 
