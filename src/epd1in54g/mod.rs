@@ -82,7 +82,7 @@ where
         self.send_resolution(spi)?;
 
         // Unknown 0xe9
-        self.cmd_with_data(spi, Command::UnkonwnInit2, &[0x01])?;
+        self.cmd_with_data(spi, Command::UnknownInit2, &[0x01])?;
         self.cmd_with_data(spi, Command::PllControl, &[0x08])?;
 
         // power on

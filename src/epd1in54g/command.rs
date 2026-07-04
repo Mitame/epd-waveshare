@@ -41,7 +41,7 @@ pub(crate) enum Command {
     UnknownInit3 = 0xE0,
     PowerSaving = 0xE3,
     UnknownInit4 = 0xE6,
-    UnkonwnInit2 = 0xE9,
+    UnknownInit2 = 0xE9,
     LvdVoltageSelect = 0xE4,
 }
 
